@@ -39,7 +39,13 @@ fi
 
 php artisan config:clear || true
 php artisan storage:link --force 2>/dev/null || php artisan storage:link || true
-php artisan migrate --force || true
+
+# Si la base est incomplète (ex. ancienne tentative), on repart proprement une fois.
+if ! php artisan tinker --execute="echo \\Illuminate\\Support\\Facades\\Schema::hasColumn('users','role') ? 'ok' : 'no';" 2>/dev/null | grep -q ok; then
+  php artisan migrate:fresh --force || true
+else
+  php artisan migrate --force || true
+fi
 php artisan db:seed --force || true
 
 exec apache2-foreground
